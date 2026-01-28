@@ -1,0 +1,2137 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>KMB CardioJeopardy Trainer</title>
+  <style>
+    :root{
+      --bg: #0b0c10;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --stroke: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+      --muted2: rgba(255,255,255,.55);
+      --good: rgba(44, 210, 120, .95);
+      --bad: rgba(255, 90, 90, .95);
+      --warn: rgba(255, 200, 60, .95);
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius: 16px;
+      --radius2: 22px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    }
+
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 600px at 15% 10%, rgba(120,90,255,.24), transparent 60%),
+        radial-gradient(1200px 600px at 85% 20%, rgba(44,210,120,.16), transparent 55%),
+        radial-gradient(900px 900px at 50% 90%, rgba(255,200,60,.10), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      overflow-x:hidden;
+    }
+
+    a{ color: inherit; text-decoration:none; }
+    button, input, select, textarea{ font-family: inherit; }
+
+    .app{
+      min-height:100%;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+      padding: 28px 16px;
+    }
+
+    .shell{
+      width:min(1240px, 100%);
+      display:flex;
+      gap:16px;
+    }
+
+    .side{
+      width: 280px;
+      flex: 0 0 auto;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      position: sticky;
+      top: 16px;
+      height: fit-content;
+      display:none;
+    }
+
+    .main{
+      flex: 1 1 auto;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 14px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--stroke);
+      background: rgba(0,0,0,.10);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      min-width: 260px;
+    }
+
+    .logo{
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background:
+        radial-gradient(16px 16px at 30% 30%, rgba(255,255,255,.35), transparent 60%),
+        linear-gradient(135deg, rgba(120,90,255,.95), rgba(80,180,255,.72));
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 10px 25px rgba(0,0,0,.35);
+      display:grid;
+      place-items:center;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+
+    .titlewrap{ display:flex; flex-direction:column; }
+    .title{ font-weight: 800; font-size: 14px; letter-spacing:.2px; line-height:1.1; }
+    .subtitle{ font-size: 12px; color: var(--muted2); }
+
+    .metrics{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .chip{
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      white-space:nowrap;
+    }
+    .chip b{ color: var(--text); font-weight: 800; }
+
+    .content{
+      padding: 18px;
+    }
+
+    .grid{
+      display:grid;
+      gap: 14px;
+    }
+    .grid.cols2{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.cols3{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    @media (max-width: 900px){
+      .grid.cols2, .grid.cols3{ grid-template-columns: 1fr; }
+      .brand{ min-width: auto; }
+      .metrics{ justify-content:flex-start; }
+    }
+
+    .card{
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .card h2, .card h3{
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      letter-spacing: .2px;
+    }
+    .card p{ margin: 8px 0 0 0; color: var(--muted); font-size: 13px; line-height:1.5; }
+
+    .btnrow{ display:flex; gap:10px; flex-wrap:wrap; }
+    .btn{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+      font-weight: 700;
+      font-size: 13px;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      user-select:none;
+    }
+    .btn:hover{ background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.22); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(120,90,255,.95), rgba(80,180,255,.75));
+      border-color: rgba(255,255,255,.22);
+    }
+    .btn.good{ background: rgba(44,210,120,.18); border-color: rgba(44,210,120,.30); }
+    .btn.bad{ background: rgba(255,90,90,.16); border-color: rgba(255,90,90,.30); }
+    .btn.warn{ background: rgba(255,200,60,.14); border-color: rgba(255,200,60,.28); }
+    .btn.ghost{ background: transparent; border-color: rgba(255,255,255,.12); color: var(--muted); }
+    .btn.small{ padding: 7px 10px; border-radius: 12px; font-weight: 700; font-size: 12px; }
+
+    .kpi{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap: 12px;
+    }
+    .kpi .v{ font-size: 20px; font-weight: 900; letter-spacing: .2px; }
+    .kpi .l{ color: var(--muted2); font-size: 12px; margin-top: 2px; }
+
+    .tablewrap{
+      overflow:auto;
+      border-radius: 14px;
+      border: 1px solid var(--stroke);
+    }
+    table{
+      width:100%;
+      border-collapse: collapse;
+      min-width: 920px;
+      background: rgba(0,0,0,.10);
+    }
+    th, td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      vertical-align: top;
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+    th{
+      text-align:left;
+      position: sticky;
+      top: 0;
+      background: rgba(0,0,0,.28);
+      backdrop-filter: blur(10px);
+      z-index: 1;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing:.2px;
+    }
+    td code{ font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,.82); }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .pill.good{ border-color: rgba(44,210,120,.35); background: rgba(44,210,120,.10); color: rgba(210,255,230,.92); }
+    .pill.bad{ border-color: rgba(255,90,90,.35); background: rgba(255,90,90,.10); color: rgba(255,220,220,.92); }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-top: 10px;
+    }
+    .field label{
+      font-size: 12px;
+      color: var(--muted2);
+    }
+    .field input, .field select, .field textarea{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      outline:none;
+    }
+    .field textarea{ min-height: 110px; resize: vertical; }
+
+    .split{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){ .split{ grid-template-columns: 1fr; } }
+
+    .notice{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.15);
+      border-radius: 14px;
+      padding: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.5;
+    }
+
+    .bigcenter{
+      display:grid;
+      place-items:center;
+      min-height: 420px;
+      text-align:center;
+      padding: 22px;
+    }
+
+    .jeopardyBoard{
+      display:grid;
+      gap: 10px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    @media (max-width: 980px){
+      .jeopardyBoard{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .cat{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.14);
+      border-radius: 16px;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height: 280px;
+    }
+    .catHeader{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing:.2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.88);
+    }
+    .catCells{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      padding: 10px;
+      flex: 1 1 auto;
+    }
+    .cell{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      padding: 10px;
+      cursor:pointer;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+    }
+    .cell:hover{ background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.22); }
+    .cell:active{ transform: translateY(1px); }
+    .cell.used{
+      opacity:.42;
+      cursor:not-allowed;
+      filter: saturate(.6);
+    }
+    .cell .pts{
+      font-weight: 950;
+      font-size: 14px;
+      letter-spacing:.2px;
+    }
+    .cell .tag{
+      font-size: 11px;
+      color: var(--muted2);
+    }
+
+    .qTitle{
+      font-weight: 900;
+      letter-spacing:.2px;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .options{
+      display:grid;
+      gap:10px;
+      margin-top: 12px;
+    }
+    .opt{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.14);
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor:pointer;
+      transition: background .15s ease, border-color .15s ease, transform .08s ease;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .opt:hover{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.22); }
+    .opt:active{ transform: translateY(1px); }
+    .opt .label{ font-weight: 800; font-size: 12px; color: rgba(255,255,255,.82); }
+    .opt .text{ color: rgba(255,255,255,.90); font-size: 13px; line-height:1.35; }
+
+    .modalBack{
+      position: fixed;
+      inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 50;
+    }
+    .modal{
+      width: min(980px, 100%);
+      background: rgba(20,20,26,.94);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modalHeader{
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 10px;
+      background: rgba(255,255,255,.06);
+    }
+    .modalHeader h3{ margin:0; font-size: 13px; letter-spacing:.2px; }
+    .modalBody{ padding: 16px; }
+    .modalFooter{
+      padding: 14px 16px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .dropzone{
+      border: 1px dashed rgba(255,255,255,.25);
+      background: rgba(255,255,255,.05);
+      border-radius: 18px;
+      padding: 18px;
+      min-height: 160px;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      color: var(--muted);
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .dropzone.drag{
+      background: rgba(120,90,255,.14);
+      border-color: rgba(120,90,255,.55);
+      color: rgba(255,255,255,.85);
+    }
+
+    .loginWrap{
+      width:min(980px, 100%);
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;
+      padding: 18px;
+    }
+    @media (max-width: 980px){ .loginWrap{ grid-template-columns: 1fr; } }
+    .hero{
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(800px 380px at 10% 20%, rgba(120,90,255,.30), transparent 55%),
+        radial-gradient(800px 380px at 90% 10%, rgba(80,180,255,.20), transparent 55%),
+        radial-gradient(900px 480px at 70% 90%, rgba(44,210,120,.16), transparent 60%),
+        rgba(0,0,0,.14);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position: relative;
+    }
+    .hero h1{
+      margin: 0 0 8px 0;
+      font-size: 22px;
+      letter-spacing: .2px;
+    }
+    .hero .tagline{
+      color: var(--muted);
+      margin: 0 0 14px 0;
+      line-height: 1.5;
+      font-size: 13px;
+    }
+    .hero .bigLogo{
+      font-weight: 950;
+      font-size: 40px;
+      letter-spacing: .6px;
+      margin-top: 22px;
+      text-shadow: 0 20px 60px rgba(0,0,0,.55);
+    }
+    .hero .bigLogo span{
+      background: linear-gradient(135deg, rgba(255,255,255,.92), rgba(255,255,255,.55));
+      -webkit-background-clip: text;
+      background-clip:text;
+      color: transparent;
+    }
+    .hero .mini{
+      margin-top: 10px;
+      color: rgba(255,255,255,.70);
+      font-size: 12px;
+    }
+
+    .toast{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.70);
+      backdrop-filter: blur(10px);
+      color: rgba(255,255,255,.88);
+      font-size: 12.5px;
+      display:none;
+      z-index: 99;
+      box-shadow: var(--shadow);
+      max-width: min(560px, calc(100% - 32px));
+    }
+    .toast b{ color: white; }
+
+    .muted{ color: var(--muted); }
+    .mono{ font-family: var(--mono); }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="shell">
+    <aside class="side" id="side">
+      <div class="brand" style="margin-bottom:12px;">
+        <div class="logo">J!</div>
+        <div class="titlewrap">
+          <div class="title">KMB CardioJeopardy</div>
+          <div class="subtitle" id="userLine">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Navegación</h3>
+        <div class="btnrow">
+          <button class="btn small" data-nav="home">Inicio</button>
+          <button class="btn small" data-nav="train">Entrenar</button>
+          <button class="btn small" data-nav="study">Estudiar</button>
+          <button class="btn small" data-nav="stats">Estadísticas</button>
+          <button class="btn small" data-nav="bank">Banco</button>
+          <button class="btn small ghost" id="btnLogout">Cerrar sesión</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Acciones rápidas</h3>
+        <div class="btnrow">
+          <button class="btn small warn" id="btnCopyGemini">Copiar prompt Gemini</button>
+          <button class="btn small ghost" id="btnResetDemo">Restablecer demo</button>
+        </div>
+        <p class="muted">El banco y el progreso se guardan en este navegador (localStorage).</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar" id="topbar">
+        <div class="brand">
+          <div class="logo">J!</div>
+          <div class="titlewrap">
+            <div class="title" id="viewTitle">KMB CardioJeopardy Trainer</div>
+            <div class="subtitle" id="viewSub">Entrenamiento tipo Jeopardy para SCC</div>
+          </div>
+        </div>
+        <div class="metrics" id="metrics">
+          <div class="chip"><span>Concursante</span> <b id="mUser">—</b></div>
+          <div class="chip"><span>Puntos</span> <b id="mScore">0</b></div>
+          <div class="chip"><span>Prom. seg/preg</span> <b id="mAvg">0</b></div>
+          <div class="chip"><span>Tiempo total</span> <b id="mTotal">0:00</b></div>
+        </div>
+      </div>
+
+      <div class="content" id="content"></div>
+    </main>
+  </div>
+</div>
+
+<div class="modalBack" id="modalBack" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modalHeader">
+      <h3 id="modalTitle">Modal</h3>
+      <button class="btn small ghost" id="modalClose">Cerrar</button>
+    </div>
+    <div class="modalBody" id="modalBody"></div>
+    <div class="modalFooter" id="modalFooter"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/** =========================
+ *  KMB CardioJeopardy Trainer
+ *  Single-file SPA (no backend).
+ *  Persistencia: localStorage por usuario.
+ *  ========================= */
+
+const APP_KEY = "kmb_cardiojeopardy_v1";
+const NOW = () => new Date().toISOString();
+const uid = () => "q_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+
+const USERS = [
+  { name: "Kevin Mora", username: "kevinmora", password: "ICESI", role: "admin" },
+  { name: "Dairo Vargas", username: "dairovargas", password: "ICESI", role: "player" },
+  { name: "Marlon Laguado", username: "marlonlaguado", password: "ICESI", role: "player" }
+];
+
+const DEFAULT_CATEGORIES = [
+  "Cardiología Clínica",
+  "Falla Cardíaca",
+  "Hemodinamia",
+  "Electrofisiología",
+  "Imágenes",
+];
+
+const DEFAULT_VALUES = [100, 200, 300, 400];
+
+const seedQuestions = () => ([
+  {
+    id: uid(),
+    category: "Falla Cardíaca",
+    value: 100,
+    question: "En un paciente con HFrEF sintomática, ¿cuál es el pilar farmacológico con mayor impacto en reducción de mortalidad que debe iniciarse precozmente junto con los demás pilares?",
+    options: [
+      { text: "Inhibidor SGLT2 (dapagliflozina/empagliflozina)", correct: true, justification: "Los SGLT2i demostraron reducción consistente de muerte CV y hospitalización por IC en HFrEF y HFpEF, con inicio seguro y temprano." },
+      { text: "Digoxina", correct: false, justification: "Puede reducir hospitalizaciones en algunos contextos, pero no reduce mortalidad de forma consistente." },
+      { text: "Ivabradina en todos los pacientes", correct: false, justification: "Útil solo en ritmo sinusal con FC elevada pese a beta-bloqueo; no aplica universalmente." },
+      { text: "Nitratos/hidralazina en todos los pacientes", correct: false, justification: "Indicados en subgrupos (p. ej., intolerancia a RAASi, ciertos perfiles), no como pilar universal inicial." }
+    ],
+    correctAnswerText: "¿Qué es un inhibidor SGLT2?",
+    studyText: "Concepto clave: la terapia cuádruple temprana en HFrEF incluye ARNI/ACEi/ARB, beta-bloqueador, antagonista de receptor mineralocorticoide y SGLT2i. Los SGLT2i aportan beneficio temprano, perfil hemodinámico favorable y efecto consistente en desenlaces duros. Repasa indicaciones, contraindicaciones (cetoacidosis euglucémica rara, infecciones genitales), ajustes en ERC y manejo perioperatorio."
+  },
+  {
+    id: uid(),
+    category: "Hemodinamia",
+    value: 200,
+    question: "En un choque cardiogénico con sospecha de congestión pulmonar importante, ¿qué medición hemodinámica se correlaciona mejor con la presión de llenado izquierda?",
+    options: [
+      { text: "Presión capilar pulmonar (PCP / wedge)", correct: true, justification: "La PCP aproxima presión auricular izquierda y presión de llenado del VI en ausencia de enfermedad mitral severa u obstrucción venosa pulmonar." },
+      { text: "Presión auricular derecha", correct: false, justification: "Informa sobre precarga derecha; no reemplaza llenado izquierdo." },
+      { text: "Presión arterial sistólica", correct: false, justification: "Es un resultado macrohemodinámico, no una presión de llenado." },
+      { text: "Resistencia vascular sistémica por cálculo", correct: false, justification: "Caracteriza poscarga sistémica; no estima presión de llenado izquierda." }
+    ],
+    correctAnswerText: "¿Qué es la presión capilar pulmonar (wedge)?",
+    studyText: "La PCP (pulmonary capillary wedge pressure) se obtiene al ocluir transitoriamente una rama arterial pulmonar con el balón del Swan-Ganz. En condiciones adecuadas refleja presión venosa/auricular izquierda y se usa para perfilar congestión, guiar diuresis/vasodilatación y diferenciar shock cardiogénico vs distributivo. Considera limitaciones: PEEP elevada, enfermedad mitral, hipertensión pulmonar venocapilar compleja y errores de nivelación/transductor."
+  },
+  {
+    id: uid(),
+    category: "Electrofisiología",
+    value: 300,
+    question: "Un ECG con QRS estrecho, ondas en 'dientes de sierra' negativas en II, III, aVF y frecuencia auricular ~300 lpm sugiere:",
+    options: [
+      { text: "Flutter auricular típico (istmo cavotricuspídeo dependiente)", correct: true, justification: "Patrón clásico de flutter típico: serrucho en derivaciones inferiores, circuito macroreentrante alrededor del anillo tricuspídeo." },
+      { text: "Taquicardia auricular focal", correct: false, justification: "Suele tener morfología P distinta pero no el serrucho típico continuo." },
+      { text: "Fibrilación auricular", correct: false, justification: "FA carece de ondas F organizadas y muestra irregularidad completa." },
+      { text: "AVNRT", correct: false, justification: "Suele ocultar P o tener pseudo r' en V1/pseudo S; no ondas F en serrucho." }
+    ],
+    correctAnswerText: "¿Qué es flutter auricular típico?",
+    studyText: "Flutter típico: macroreentrada dependiente del istmo cavotricuspídeo. Frecuencia auricular ~240–340. Conducción AV frecuente 2:1 (FC ~150). Manejo: control de frecuencia, cardioversión si inestable, anticoagulación según riesgo y estrategia, y ablación del istmo con alta tasa de éxito."
+  },
+  {
+    id: uid(),
+    category: "Cardiología Clínica",
+    value: 400,
+    question: "Paciente con dolor torácico, troponina elevada, coronarias sin lesiones obstructivas en angiografía. ¿Cómo se denomina el síndrome si cumple criterios de IAM pero sin estenosis ≥50%?",
+    options: [
+      { text: "MINOCA", correct: true, justification: "MINOCA: infarto con coronarias no obstructivas; requiere descartar miocarditis, takotsubo y buscar mecanismo (vasoespasmo, trombosis, disección, microvascular)." },
+      { text: "INOCA", correct: false, justification: "INOCA es isquemia sin coronariopatía obstructiva, no implica necesariamente IAM con troponina." },
+      { text: "SCAD", correct: false, justification: "La disección coronaria espontánea es un mecanismo posible dentro de MINOCA, pero no sinónimo." },
+      { text: "Angina variante de Prinzmetal", correct: false, justification: "Vasoespasmo puede causar MINOCA, pero no todos los casos lo son." }
+    ],
+    correctAnswerText: "¿Qué es MINOCA?",
+    studyText: "MINOCA (Myocardial Infarction with Non-Obstructive Coronary Arteries): diagnóstico de trabajo cuando hay IAM (criterios universales) y angiografía sin estenosis obstructiva (habitualmente <50%). Pasos: confirmar IAM, excluir diagnósticos alternos (miocarditis, takotsubo), e investigar mecanismo (vasoespasmo, disfunción microvascular, trombo/embolia, SCAD). La RM cardíaca es clave cuando está disponible."
+  }
+]);
+
+const GEMINI_PROMPT = `Actúa como un equipo experto (cardiólogo, educador clínico y editor de banco tipo Jeopardy). Tu tarea es GENERAR un archivo JSON válido (solo JSON, sin texto extra) para importar a una app de entrenamiento. Reglas:
+
+1) Estructura del JSON:
+{
+  "meta": {
+    "source": "Gemini",
+    "version": "1.0",
+    "language": "es",
+    "created_at": "YYYY-MM-DD",
+    "notes": "opcional"
+  },
+  "questions": [
+    {
+      "id": "string_unico",
+      "category": "Cardiología Clínica | Falla Cardíaca | Hemodinamia | Electrofisiología | Imágenes | Prevención | ...",
+      "value": 100 | 200 | 300 | 400 | 500,
+      "question": "Texto de la pregunta (estilo Jeopardy: pista; la respuesta debe ser formulada como pregunta).",
+      "options": [
+        { "text": "Opción A", "correct": false, "justification": "Justificación clínica breve y concreta de por qué es incorrecta." },
+        { "text": "Opción B", "correct": true,  "justification": "Justificación clínica breve y concreta de por qué es correcta." },
+        { "text": "Opción C", "correct": false, "justification": "..." },
+        { "text": "Opción D", "correct": false, "justification": "..." }
+      ],
+      "correctAnswerText": "La respuesta correcta en formato Jeopardy, p.ej. '¿Qué es ...?'",
+      "studyText": "Explicación EXTENSA (mínimo 120-250 palabras) tipo apunte: definiciones, perlas clínicas, diagnóstico diferencial, red flags, manejo práctico, y si aplica: valores/criterios/algoritmos."
+    }
+  ]
+}
+
+2) Requisitos de calidad:
+- Debe haber EXACTAMENTE 5 categorías y en cada categoría 4 preguntas con valores 100/200/300/400 (20 preguntas).
+- Las preguntas deben ser de cardiología para concurso (nivel fellow).
+- Cada pregunta debe tener 4 opciones y EXACTAMENTE una con correct=true.
+- Las justificaciones deben estar alineadas con la opción (no genéricas).
+- El campo studyText debe permitir estudiar el tema si el usuario falla.
+- No repitas preguntas ni opciones.
+- IDs deben ser únicos y estables (usa un patrón tipo "SCC2026_CAT01_Q01" etc.).
+
+3) Temas sugeridos por categoría:
+- Cardiología Clínica: síndrome coronario, valvulopatías, cardio-oncología, cardio-embarazo.
+- Falla Cardíaca: HFrEF/HFpEF, shock, dispositivos, diuréticos, comorbilidades.
+- Hemodinamia: RHC, perfiles, valvuloplastia, complicaciones, ICP.
+- Electrofisiología: arritmias, ECG, anticoagulación, dispositivos, síncope.
+- Imágenes: eco, strain, RM, TAC coronario, pruebas funcionales.
+
+Genera ahora el JSON completo con 20 preguntas siguiendo estas reglas.`;
+
+// ---------- Storage ----------
+function loadState(){
+  const raw = localStorage.getItem(APP_KEY);
+  if(!raw){
+    const init = {
+      version: 1,
+      users: {}, // username -> userState
+      bank: {
+        questions: seedQuestions().map(q => ({...q, active:true, createdAt: NOW(), updatedAt: NOW()})),
+        hiddenIds: []
+      },
+      audit: { createdAt: NOW(), updatedAt: NOW() }
+    };
+    localStorage.setItem(APP_KEY, JSON.stringify(init));
+    return init;
+  }
+  try{
+    const st = JSON.parse(raw);
+    if(!st.bank || !Array.isArray(st.bank.questions)) throw new Error("Estado inválido");
+    return st;
+  }catch(e){
+    // Si algo se dañó, reinicia a demo.
+    const init = {
+      version: 1,
+      users: {},
+      bank: { questions: seedQuestions().map(q => ({...q, active:true, createdAt: NOW(), updatedAt: NOW()})), hiddenIds: [] },
+      audit: { createdAt: NOW(), updatedAt: NOW() }
+    };
+    localStorage.setItem(APP_KEY, JSON.stringify(init));
+    return init;
+  }
+}
+
+function saveState(st){
+  st.audit.updatedAt = NOW();
+  localStorage.setItem(APP_KEY, JSON.stringify(st));
+}
+
+function getUserState(st, username){
+  if(!st.users[username]){
+    st.users[username] = {
+      username,
+      displayName: USERS.find(u=>u.username===username)?.name || username,
+      role: USERS.find(u=>u.username===username)?.role || "player",
+      createdAt: NOW(),
+      updatedAt: NOW(),
+      training: {
+        totalSeconds: 0,
+        score: 0,
+        attempts: [], // {qid, category, value, correct, seconds, at}
+        sessions: [], // {startedAt, endedAt, seconds, scoreDelta, attempts}
+        board: {
+          usedIds: [] // para sesión activa (se resetea en start)
+        }
+      },
+      wrong: {
+        // qid -> {count, lastAt}
+        items: {}
+      }
+    };
+    saveState(st);
+  }
+  return st.users[username];
+}
+
+// ---------- UI helpers ----------
+const el = (sel) => document.querySelector(sel);
+const content = el("#content");
+const side = el("#side");
+const topbar = el("#topbar");
+const toast = el("#toast");
+
+function showToast(html){
+  toast.innerHTML = html;
+  toast.style.display = "block";
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> toast.style.display="none", 2400);
+}
+
+function formatMMSS(totalSeconds){
+  const s = Math.max(0, Math.round(totalSeconds));
+  const mm = Math.floor(s/60);
+  const ss = s%60;
+  return `${mm}:${String(ss).padStart(2,"0")}`;
+}
+
+function avgSeconds(attempts){
+  if(!attempts.length) return 0;
+  const sum = attempts.reduce((a,x)=>a + (x.seconds||0), 0);
+  return Math.round(sum/attempts.length);
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function setHeader(userState){
+  const attempts = userState?.training?.attempts || [];
+  el("#mUser").textContent = userState ? userState.displayName : "—";
+  el("#mScore").textContent = userState ? String(userState.training.score || 0) : "0";
+  el("#mAvg").textContent = userState ? String(avgSeconds(attempts)) : "0";
+  el("#mTotal").textContent = userState ? formatMMSS(userState.training.totalSeconds || 0) : "0:00";
+  el("#userLine").textContent = userState ? `${userState.displayName} · ${userState.role}` : "—";
+  side.style.display = userState ? "block" : "none";
+  el("#metrics").style.visibility = userState ? "visible" : "hidden";
+}
+
+function setViewTitle(title, subtitle){
+  el("#viewTitle").textContent = title;
+  el("#viewSub").textContent = subtitle || "";
+}
+
+// ---------- Router ----------
+const ROUTES = {
+  login: renderLogin,
+  home: renderHome,
+  bank: renderBankMenu,
+  bank_total: renderBankTotal,
+  bank_upload: renderBankUpload,
+  bank_manage: renderBankManage,
+  train: renderTrainLanding,
+  train_board: renderTrainBoard,
+  train_question: renderTrainQuestion,
+  train_result: renderTrainResult,
+  study: renderStudy,
+  stats: renderStats
+};
+
+let state = loadState();
+let session = {
+  user: null, // username
+  view: "login",
+  train: {
+    active: false,
+    startedAt: null,
+    currentQ: null, // question obj
+    currentStartTs: null,
+    lastResult: null
+  }
+};
+
+function nav(view, payload={}){
+  session.view = view;
+  session.payload = payload;
+  render();
+}
+
+function render(){
+  state = loadState();
+  const userState = session.user ? getUserState(state, session.user) : null;
+  setHeader(userState);
+
+  const fn = ROUTES[session.view] || renderLogin;
+  fn(userState, session.payload || {});
+}
+
+document.addEventListener("click", (e)=>{
+  const btn = e.target.closest("[data-nav]");
+  if(btn){
+    const v = btn.getAttribute("data-nav");
+    nav(v);
+  }
+});
+
+// Logout
+el("#btnLogout").addEventListener("click", ()=>{
+  session.user = null;
+  session.train = { active:false, startedAt:null, currentQ:null, currentStartTs:null, lastResult:null };
+  nav("login");
+});
+
+// Copy Gemini prompt
+el("#btnCopyGemini").addEventListener("click", async ()=>{
+  try{
+    await navigator.clipboard.writeText(GEMINI_PROMPT);
+    showToast("<b>Copiado:</b> prompt para Google Gemini.");
+  }catch{
+    showToast("No se pudo usar portapapeles. Copia manualmente desde Banco → Subir preguntas.");
+  }
+});
+
+// Reset demo
+el("#btnResetDemo").addEventListener("click", ()=>{
+  localStorage.removeItem(APP_KEY);
+  state = loadState();
+  if(session.user){
+    getUserState(state, session.user);
+  }
+  showToast("<b>Listo:</b> demo restablecida.");
+  render();
+});
+
+// ---------- Modal ----------
+const modalBack = el("#modalBack");
+const modalTitle = el("#modalTitle");
+const modalBody = el("#modalBody");
+const modalFooter = el("#modalFooter");
+el("#modalClose").addEventListener("click", ()=> closeModal());
+modalBack.addEventListener("click", (e)=>{ if(e.target === modalBack) closeModal(); });
+
+function openModal(title, bodyHtml, footerHtml){
+  modalTitle.textContent = title;
+  modalBody.innerHTML = bodyHtml;
+  modalFooter.innerHTML = footerHtml || `<button class="btn" id="modalOk">OK</button>`;
+  modalBack.style.display = "flex";
+  const ok = el("#modalOk");
+  if(ok) ok.addEventListener("click", ()=> closeModal());
+}
+
+function closeModal(){
+  modalBack.style.display = "none";
+  modalBody.innerHTML = "";
+  modalFooter.innerHTML = "";
+}
+
+// ---------- Bank helpers ----------
+function allQuestions(st){
+  return st.bank.questions || [];
+}
+function activeQuestions(st){
+  return allQuestions(st).filter(q => q.active !== false);
+}
+function findQuestion(st, qid){
+  return allQuestions(st).find(q => q.id === qid);
+}
+
+function normalizeImportedQuestions(json){
+  if(!json || typeof json !== "object") throw new Error("JSON inválido");
+  if(!Array.isArray(json.questions)) throw new Error("No existe 'questions' (array).");
+  const qs = json.questions.map((q)=>{
+    if(!q.id || !q.category || !q.value || !q.question || !Array.isArray(q.options) || q.options.length < 2){
+      throw new Error("Estructura incompleta en al menos una pregunta.");
+    }
+    const correctCount = q.options.filter(o=>o.correct===true).length;
+    if(correctCount !== 1) throw new Error(`La pregunta ${q.id} no tiene EXACTAMENTE 1 opción correcta.`);
+    return {
+      id: String(q.id),
+      category: String(q.category),
+      value: Number(q.value),
+      question: String(q.question),
+      options: q.options.map(o=>({
+        text: String(o.text ?? ""),
+        correct: Boolean(o.correct),
+        justification: String(o.justification ?? "")
+      })),
+      correctAnswerText: String(q.correctAnswerText ?? ""),
+      studyText: String(q.studyText ?? ""),
+      active: true,
+      createdAt: NOW(),
+      updatedAt: NOW()
+    };
+  });
+  return qs;
+}
+
+function mergeQuestions(st, imported){
+  const existing = allQuestions(st);
+  const existingIds = new Set(existing.map(q=>q.id));
+  let added = 0, skipped = 0;
+  for(const q of imported){
+    if(existingIds.has(q.id)){
+      // No pisamos: conservador (puedes cambiar a "update" si lo deseas)
+      skipped++;
+      continue;
+    }
+    existing.push(q);
+    added++;
+  }
+  st.bank.questions = existing;
+  saveState(st);
+  return {added, skipped, total: existing.length};
+}
+
+// ---------- Views ----------
+function renderLogin(){
+  setViewTitle("KMB CardioJeopardy Trainer", "Inicio de sesión");
+  topbar.style.display = "flex";
+  content.innerHTML = `
+    <div class="loginWrap">
+      <div class="hero">
+        <div class="bigLogo"><span>Jeopardy</span> <span style="opacity:.85">Cardio</span></div>
+        <p class="tagline">
+          Entrena como en el concurso de congreso: tablero por categorías y puntos, cronómetro por pregunta,
+          explicaciones post-respuesta, y módulo de estudio basado en errores.
+        </p>
+        <div class="notice">
+          <b>Usuarios demo</b><br>
+          Admin: <span class="mono">kevinmora / ICESI</span><br>
+          Jugadores: <span class="mono">dairovargas / ICESI</span>, <span class="mono">marlonlaguado / ICESI</span>
+        </div>
+        <div class="mini">Persistencia local (localStorage). Ideal para uso offline o hosting estático.</div>
+      </div>
+
+      <div class="card">
+        <h2>Ingresar</h2>
+        <div class="field">
+          <label>Usuario</label>
+          <input id="loginUser" placeholder="kevinmora" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input id="loginPass" type="password" placeholder="ICESI" autocomplete="current-password" />
+        </div>
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn primary" id="btnLogin">Iniciar sesión</button>
+          <button class="btn ghost" id="btnShowPrompt">Ver prompt Gemini</button>
+        </div>
+        <p class="muted">Seguridad: esto es una app local sin backend; el login es “gating” básico para separar perfiles.</p>
+      </div>
+    </div>
+  `;
+
+  el("#btnLogin").addEventListener("click", ()=>{
+    const u = (el("#loginUser").value || "").trim();
+    const p = (el("#loginPass").value || "").trim();
+    const match = USERS.find(x => x.username === u && x.password === p);
+    if(!match){
+      showToast("<b>Error:</b> usuario o contraseña inválidos.");
+      return;
+    }
+    session.user = match.username;
+    // asegurar estado usuario
+    getUserState(state, session.user);
+    showToast(`<b>Bienvenido:</b> ${match.name}`);
+    nav("home");
+  });
+
+  el("#btnShowPrompt").addEventListener("click", ()=>{
+    openModal(
+      "Prompt para Google Gemini (para generar banco JSON)",
+      `<div class="notice"><div class="btnrow" style="margin-bottom:10px;">
+          <button class="btn small warn" id="copyPrompt2">Copiar</button>
+        </div>
+        <textarea class="mono" style="width:100%;min-height:320px;">${GEMINI_PROMPT}</textarea>
+      </div>`,
+      `<button class="btn" id="modalOk">Cerrar</button>`
+    );
+    el("#copyPrompt2").addEventListener("click", async ()=>{
+      try{ await navigator.clipboard.writeText(GEMINI_PROMPT); showToast("<b>Copiado</b>"); }
+      catch{ showToast("No se pudo copiar automáticamente."); }
+    });
+  });
+}
+
+function renderHome(userState){
+  setViewTitle("Panel principal", "Selecciona un módulo");
+  content.innerHTML = `
+    <div class="grid cols2">
+      <div class="card">
+        <h2>Entrenar Jeopardy</h2>
+        <p>Simulación tipo tablero con categorías/puntos, cronómetro y explicación detallada al final de cada pregunta.</p>
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn primary" data-nav="train">Entrenar</button>
+          <button class="btn ghost" id="btnTrainReset">Reiniciar tablero</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Estudiar para el Jeopardy</h2>
+        <p>Lista de preguntas falladas. Al abrir cada una verás un texto extenso (studyText) para reforzar el tema.</p>
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn" data-nav="study">Ir a estudiar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Estadísticas</h2>
+        <p>Consolidado tipo “tabla dinámica”: aciertos/errores, tiempos promedio global y por resultado, y rendimiento por categoría.</p>
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn" data-nav="stats">Ver estadísticas</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Banco de preguntas</h2>
+        <p>Ver banco total, subir archivo JSON (drag & drop), gestionar (ocultar/borrar) y agregar preguntas manualmente.</p>
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn" data-nav="bank">Abrir banco</button>
+          <button class="btn warn" id="btnCopyPrompt3">Copiar prompt Gemini</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  el("#btnTrainReset").addEventListener("click", ()=>{
+    userState.training.board.usedIds = [];
+    saveState(state);
+    showToast("<b>Listo:</b> tablero reiniciado (solo para ti).");
+    render();
+  });
+
+  el("#btnCopyPrompt3").addEventListener("click", async ()=>{
+    try{
+      await navigator.clipboard.writeText(GEMINI_PROMPT);
+      showToast("<b>Copiado:</b> prompt Gemini.");
+    }catch{
+      showToast("No se pudo copiar automáticamente.");
+    }
+  });
+}
+
+function renderBankMenu(userState){
+  setViewTitle("Banco de preguntas", "Ver, subir y gestionar");
+  const total = allQuestions(state).length;
+  const active = activeQuestions(state).length;
+  const hidden = total - active;
+
+  content.innerHTML = `
+    <div class="grid cols2">
+      <div class="card">
+        <h2>Resumen del banco</h2>
+        <div class="grid cols3">
+          <div class="card"><div class="kpi"><div><div class="v">${total}</div><div class="l">Total</div></div></div></div>
+          <div class="card"><div class="kpi"><div><div class="v">${active}</div><div class="l">Activas</div></div></div></div>
+          <div class="card"><div class="kpi"><div><div class="v">${hidden}</div><div class="l">Ocultas</div></div></div></div>
+        </div>
+        <p>El formato de importación es <span class="mono">JSON</span> (ver prompt Gemini).</p>
+      </div>
+
+      <div class="card">
+        <h2>Opciones</h2>
+        <div class="btnrow">
+          <button class="btn" data-nav="bank_total">Banco total</button>
+          <button class="btn" data-nav="bank_upload">Subir preguntas</button>
+          <button class="btn" data-nav="bank_manage">Gestionar banco</button>
+        </div>
+        <p class="muted">Tip: primero sube un JSON con 20 preguntas (5 categorías x 4 valores) para tener un tablero equilibrado.</p>
+      </div>
+    </div>
+  `;
+}
+
+function renderBankTotal(userState){
+  setViewTitle("Banco total", "Matriz de preguntas (solo lectura)");
+  const qs = allQuestions(state).slice().sort((a,b)=>{
+    const ca = (a.category||"").localeCompare(b.category||"");
+    if(ca!==0) return ca;
+    return (a.value||0)-(b.value||0);
+  });
+
+  content.innerHTML = `
+    <div class="card">
+      <h2>Matriz</h2>
+      <p>Campos: pregunta, categoría, puntos, opciones correctas/incorrectas, y estado (activa/oculta).</p>
+      <div class="tablewrap" style="margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Categoría</th><th>Puntos</th><th>Pregunta</th>
+              <th>Correcta</th><th>Incorrectas</th><th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${qs.map(q=>{
+              const correct = q.options.find(o=>o.correct) || {text:""};
+              const wrongs = q.options.filter(o=>!o.correct).map(o=>o.text).join(" | ");
+              return `
+                <tr>
+                  <td><code>${escapeHtml(q.id)}</code></td>
+                  <td>${escapeHtml(q.category)}</td>
+                  <td><span class="pill">${Number(q.value)||0}</span></td>
+                  <td>${escapeHtml(q.question)}</td>
+                  <td>${escapeHtml(correct.text)}</td>
+                  <td>${escapeHtml(wrongs)}</td>
+                  <td>${q.active!==false ? `<span class="pill good">Activa</span>` : `<span class="pill bad">Oculta</span>`}</td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+      <div class="btnrow" style="margin-top:12px;">
+        <button class="btn ghost" data-nav="bank">Volver</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderBankUpload(userState){
+  setViewTitle("Subir preguntas", "Importar JSON (drag & drop o selector)");
+  content.innerHTML = `
+    <div class="split">
+      <div class="card">
+        <h2>Importar archivo</h2>
+        <div class="dropzone" id="dropzone">
+          <div>
+            <div style="font-weight:900;letter-spacing:.2px;">Arrastra y suelta aquí tu archivo .json</div>
+            <div class="muted" style="margin-top:6px;">o usa el botón “Seleccionar archivo”.</div>
+            <div class="btnrow" style="margin-top:12px; justify-content:center;">
+              <button class="btn primary" id="pickFile">Seleccionar archivo</button>
+              <input id="fileInput" type="file" accept=".json,application/json" style="display:none;" />
+            </div>
+          </div>
+        </div>
+
+        <div class="notice" style="margin-top:12px;">
+          <b>Regla de importación:</b> el banco se <b>acumula</b>. Si el <code>id</code> ya existe, esa pregunta se <b>omite</b> (no se pisa).
+        </div>
+
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn ghost" data-nav="bank">Volver</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Prompt para Google Gemini</h2>
+        <p>Genera el JSON en Gemini y guárdalo como <span class="mono">preguntas.json</span>. Luego impórtalo aquí.</p>
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn warn" id="copyPrompt">Copiar prompt</button>
+          <button class="btn" id="showPrompt">Ver prompt</button>
+        </div>
+        <div class="field">
+          <label>Prompt (editable)</label>
+          <textarea id="promptBox" class="mono">${GEMINI_PROMPT}</textarea>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const dz = el("#dropzone");
+  const fileInput = el("#fileInput");
+
+  el("#pickFile").addEventListener("click", ()=> fileInput.click());
+
+  el("#copyPrompt").addEventListener("click", async ()=>{
+    const txt = el("#promptBox").value;
+    try{ await navigator.clipboard.writeText(txt); showToast("<b>Copiado:</b> prompt."); }
+    catch{ showToast("No se pudo copiar automáticamente."); }
+  });
+
+  el("#showPrompt").addEventListener("click", ()=>{
+    openModal("Prompt Gemini", `<textarea class="mono" style="width:100%;min-height:360px;">${escapeHtml(el("#promptBox").value)}</textarea>`);
+  });
+
+  async function handleFile(file){
+    if(!file) return;
+    const text = await file.text();
+    let json;
+    try{ json = JSON.parse(text); }
+    catch{ showToast("<b>Error:</b> el archivo no es JSON válido."); return; }
+
+    try{
+      const imported = normalizeImportedQuestions(json);
+      const res = mergeQuestions(state, imported);
+      showToast(`<b>Importado:</b> +${res.added} (omitidas ${res.skipped}). Total: ${res.total}.`);
+      render();
+    }catch(e){
+      showToast(`<b>Error:</b> ${escapeHtml(e.message)}`);
+    }
+  }
+
+  fileInput.addEventListener("change", async ()=>{
+    const f = fileInput.files?.[0];
+    await handleFile(f);
+    fileInput.value = "";
+  });
+
+  ["dragenter","dragover"].forEach(evt=>{
+    dz.addEventListener(evt, (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      dz.classList.add("drag");
+    });
+  });
+  ["dragleave","drop"].forEach(evt=>{
+    dz.addEventListener(evt, (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      dz.classList.remove("drag");
+    });
+  });
+  dz.addEventListener("drop", async (e)=>{
+    const f = e.dataTransfer.files?.[0];
+    await handleFile(f);
+  });
+}
+
+function renderBankManage(userState){
+  setViewTitle("Gestionar banco", "Ocultar / borrar / agregar manualmente");
+  const qs = allQuestions(state).slice().sort((a,b)=>{
+    const ca = (a.category||"").localeCompare(b.category||"");
+    if(ca!==0) return ca;
+    return (a.value||0)-(b.value||0);
+  });
+
+  const isAdmin = userState.role === "admin";
+
+  content.innerHTML = `
+    <div class="card">
+      <h2>Gestión</h2>
+      <p>${isAdmin ? "Puedes ocultar, borrar y agregar preguntas manualmente." : "Solo admin puede borrar/agregar. Puedes ocultar (para tu tablero no, es global)."} </p>
+      <div class="btnrow" style="margin-top:10px;">
+        <button class="btn ${isAdmin ? "primary" : "ghost"}" id="btnAddManual" ${isAdmin ? "" : "disabled"}>Agregar pregunta manual</button>
+        <button class="btn ghost" data-nav="bank">Volver</button>
+      </div>
+
+      <div class="tablewrap" style="margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Categoría</th><th>Puntos</th><th>Pregunta</th><th>Estado</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${qs.map(q=>{
+              return `
+                <tr>
+                  <td><code>${escapeHtml(q.id)}</code></td>
+                  <td>${escapeHtml(q.category)}</td>
+                  <td><span class="pill">${Number(q.value)||0}</span></td>
+                  <td>${escapeHtml(q.question)}</td>
+                  <td>${q.active!==false ? `<span class="pill good">Activa</span>` : `<span class="pill bad">Oculta</span>`}</td>
+                  <td>
+                    <div class="btnrow">
+                      <button class="btn small warn" data-toggle="${escapeHtml(q.id)}">${q.active!==false ? "Ocultar" : "Reactivar"}</button>
+                      <button class="btn small bad" data-del="${escapeHtml(q.id)}" ${isAdmin ? "" : "disabled"}>Borrar</button>
+                      <button class="btn small" data-preview="${escapeHtml(q.id)}">Ver</button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  content.querySelectorAll("[data-toggle]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.getAttribute("data-toggle");
+      const q = findQuestion(state, id);
+      if(!q) return;
+      q.active = !(q.active !== false); // toggle
+      q.updatedAt = NOW();
+      saveState(state);
+      showToast(`<b>OK:</b> ${q.active!==false ? "activa" : "oculta"}.`);
+      render();
+    });
+  });
+
+  content.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      if(userState.role !== "admin") return;
+      const id = btn.getAttribute("data-del");
+      openModal(
+        "Confirmar borrado",
+        `<div class="notice">Vas a borrar la pregunta <code>${escapeHtml(id)}</code>. Esto es irreversible.</div>`,
+        `<button class="btn ghost" id="cancelDel">Cancelar</button><button class="btn bad" id="confirmDel">Borrar</button>`
+      );
+      el("#cancelDel").addEventListener("click", ()=> closeModal());
+      el("#confirmDel").addEventListener("click", ()=>{
+        state.bank.questions = allQuestions(state).filter(q => q.id !== id);
+        saveState(state);
+        closeModal();
+        showToast("<b>Borrada.</b>");
+        render();
+      });
+    });
+  });
+
+  content.querySelectorAll("[data-preview]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.getAttribute("data-preview");
+      const q = findQuestion(state, id);
+      if(!q) return;
+      const correct = q.options.find(o=>o.correct);
+      openModal(
+        "Vista previa de pregunta",
+        `
+          <div class="card">
+            <div class="pill">${escapeHtml(q.category)}</div>
+            <div class="pill" style="margin-left:6px;">${Number(q.value)||0} pts</div>
+            <div class="qTitle" style="margin-top:10px;">${escapeHtml(q.question)}</div>
+            <div class="options">
+              ${q.options.map((o,i)=>`
+                <div class="opt" style="cursor:default;">
+                  <div><div class="label">${String.fromCharCode(65+i)}.</div><div class="text">${escapeHtml(o.text)}</div></div>
+                  <div>${o.correct ? `<span class="pill good">Correcta</span>` : `<span class="pill">Opción</span>`}</div>
+                </div>
+                <div class="notice" style="margin-top:-6px;">${escapeHtml(o.justification || "")}</div>
+              `).join("")}
+            </div>
+            <div class="notice" style="margin-top:12px;"><b>StudyText:</b><br>${escapeHtml(q.studyText||"")}</div>
+            <div class="notice" style="margin-top:10px;"><b>Respuesta Jeopardy:</b> ${escapeHtml(q.correctAnswerText|| (correct ? "¿Qué es " + correct.text + "?" : ""))}</div>
+          </div>
+        `,
+        `<button class="btn" id="modalOk">Cerrar</button>`
+      );
+    });
+  });
+
+  el("#btnAddManual").addEventListener("click", ()=>{
+    if(userState.role !== "admin") return;
+
+    openModal(
+      "Agregar pregunta manual",
+      `
+        <div class="grid cols2">
+          <div class="card">
+            <h3>Metadatos</h3>
+            <div class="field">
+              <label>ID (único, recomendado)</label>
+              <input id="mq_id" placeholder="SCC2026_CAT01_Q01" />
+            </div>
+            <div class="field">
+              <label>Categoría</label>
+              <input id="mq_cat" placeholder="Falla Cardíaca" />
+            </div>
+            <div class="field">
+              <label>Puntos</label>
+              <select id="mq_val">
+                ${[100,200,300,400,500].map(v=>`<option value="${v}">${v}</option>`).join("")}
+              </select>
+            </div>
+            <div class="field">
+              <label>Pregunta</label>
+              <textarea id="mq_q" placeholder="Texto de la pregunta..."></textarea>
+            </div>
+            <div class="field">
+              <label>Respuesta Jeopardy (opcional)</label>
+              <input id="mq_j" placeholder="¿Qué es ...?" />
+            </div>
+          </div>
+          <div class="card">
+            <h3>Opciones (4) + justificación</h3>
+            ${[0,1,2,3].map(i=>`
+              <div class="field">
+                <label>Opción ${String.fromCharCode(65+i)} (texto)</label>
+                <input id="mq_o${i}" placeholder="..." />
+              </div>
+              <div class="field">
+                <label>Justificación opción ${String.fromCharCode(65+i)}</label>
+                <textarea id="mq_just${i}" placeholder="Por qué es correcta/incorrecta..."></textarea>
+              </div>
+            `).join("")}
+            <div class="field">
+              <label>¿Cuál es la correcta?</label>
+              <select id="mq_correct">
+                <option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>StudyText (explicación extensa para estudiar si se falla)</label>
+              <textarea id="mq_study" placeholder="120–250 palabras mínimo recomendado..."></textarea>
+            </div>
+          </div>
+        </div>
+      `,
+      `<button class="btn ghost" id="cancelAdd">Cancelar</button><button class="btn primary" id="saveAdd">Guardar</button>`
+    );
+
+    el("#cancelAdd").addEventListener("click", ()=> closeModal());
+    el("#saveAdd").addEventListener("click", ()=>{
+      const id = (el("#mq_id").value || "").trim() || uid();
+      const cat = (el("#mq_cat").value || "").trim();
+      const val = Number(el("#mq_val").value);
+      const qtxt = (el("#mq_q").value || "").trim();
+      const jtxt = (el("#mq_j").value || "").trim();
+      const study = (el("#mq_study").value || "").trim();
+      if(!cat || !qtxt){
+        showToast("<b>Error:</b> categoría y pregunta son obligatorias.");
+        return;
+      }
+      if(allQuestions(state).some(x=>x.id===id)){
+        showToast("<b>Error:</b> el ID ya existe en el banco.");
+        return;
+      }
+      const correctIdx = Number(el("#mq_correct").value);
+      const options = [0,1,2,3].map(i=>({
+        text: (el(`#mq_o${i}`).value || "").trim(),
+        correct: i === correctIdx,
+        justification: (el(`#mq_just${i}`).value || "").trim()
+      }));
+      if(options.some(o=>!o.text)){
+        showToast("<b>Error:</b> todas las opciones deben tener texto.");
+        return;
+      }
+      const correctCount = options.filter(o=>o.correct).length;
+      if(correctCount !== 1){
+        showToast("<b>Error:</b> debe haber exactamente 1 correcta.");
+        return;
+      }
+      state.bank.questions.push({
+        id, category: cat, value: val, question: qtxt,
+        options,
+        correctAnswerText: jtxt,
+        studyText: study,
+        active: true,
+        createdAt: NOW(),
+        updatedAt: NOW()
+      });
+      saveState(state);
+      closeModal();
+      showToast("<b>Guardada:</b> pregunta agregada.");
+      render();
+    });
+  });
+}
+
+function renderTrainLanding(userState){
+  setViewTitle("Entrenar Jeopardy", "Configura y comienza");
+  const activeCount = activeQuestions(state).length;
+  const used = new Set(userState.training.board.usedIds || []);
+  const remaining = activeQuestions(state).filter(q=>!used.has(q.id)).length;
+
+  content.innerHTML = `
+    <div class="grid cols2">
+      <div class="card">
+        <h2>Sesión de entrenamiento</h2>
+        <p>
+          Tablero por categorías y puntos. Al elegir una casilla se inicia cronómetro. Al responder verás explicación y podrás continuar.
+        </p>
+        <div class="grid cols3" style="margin-top:12px;">
+          <div class="card"><div class="kpi"><div><div class="v">${activeCount}</div><div class="l">Preguntas activas</div></div></div></div>
+          <div class="card"><div class="kpi"><div><div class="v">${remaining}</div><div class="l">Disponibles en tu tablero</div></div></div></div>
+          <div class="card"><div class="kpi"><div><div class="v">${userState.training.attempts.length}</div><div class="l">Respondidas (histórico)</div></div></div></div>
+        </div>
+
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn primary" id="btnStartTrain">Iniciar entrenamiento</button>
+          <button class="btn ghost" id="btnResetBoard">Reiniciar tablero</button>
+          <button class="btn ghost" data-nav="home">Volver</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Modo “tipo congreso”</h2>
+        <p class="muted">
+          En FIT Jeopardy se usa un tablero de 5 categorías con 4 preguntas por categoría (20 en total), y la respuesta es rápida (en vivo ~5 s). Aquí entrenas individualmente con la misma lógica, añadiendo explicación y trazabilidad. 
+        </p>
+        <div class="notice" style="margin-top:12px;">
+          Sugerencia: sube un JSON con 5 categorías × 4 valores (100/200/300/400) para un tablero balanceado.
+        </div>
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn" data-nav="bank_upload">Subir preguntas</button>
+          <button class="btn" data-nav="bank_total">Ver banco</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  el("#btnResetBoard").addEventListener("click", ()=>{
+    userState.training.board.usedIds = [];
+    saveState(state);
+    showToast("<b>Listo:</b> tablero reiniciado.");
+    render();
+  });
+
+  el("#btnStartTrain").addEventListener("click", ()=>{
+    // Inicia sesión de entrenamiento (acumulativa en tiempo/puntaje, pero tablero por usuario)
+    session.train.active = true;
+    session.train.startedAt = Date.now();
+    session.train.currentQ = null;
+    session.train.currentStartTs = null;
+    session.train.lastResult = null;
+    nav("train_board");
+  });
+}
+
+function deriveBoard(st, userState){
+  // Construye tablero de 5 categorías con valores 100-400; si no hay suficientes, rellena con "Vacío".
+  const qs = activeQuestions(st);
+
+  // categorías disponibles
+  const cats = [...new Set(qs.map(q=>q.category))].slice(0, 12);
+  let chosenCats = DEFAULT_CATEGORIES.filter(c => cats.includes(c));
+  // completar
+  for(const c of cats){
+    if(chosenCats.length >= 5) break;
+    if(!chosenCats.includes(c)) chosenCats.push(c);
+  }
+  while(chosenCats.length < 5) chosenCats.push("Miscelánea");
+
+  const used = new Set(userState.training.board.usedIds || []);
+  const board = chosenCats.map(cat=>{
+    const cells = DEFAULT_VALUES.map(val=>{
+      // buscar una pregunta no usada, de esa categoría/valor
+      const cand = qs.filter(q => q.category===cat && Number(q.value)===val && !used.has(q.id));
+      return { category: cat, value: val, q: cand[0] || null };
+    });
+    return { category: cat, cells };
+  });
+  return board;
+}
+
+function renderTrainBoard(userState){
+  setViewTitle("Entrenar", "Tablero Jeopardy");
+  const board = deriveBoard(state, userState);
+
+  content.innerHTML = `
+    <div class="card">
+      <h2>Tablero</h2>
+      <p>Selecciona una casilla (categoría/puntos). Cada casilla se usa una vez por tablero (por usuario).</p>
+      <div class="jeopardyBoard" style="margin-top:12px;">
+        ${board.map(col=>{
+          return `
+            <div class="cat">
+              <div class="catHeader">${escapeHtml(col.category)}</div>
+              <div class="catCells">
+                ${col.cells.map(cell=>{
+                  const used = !cell.q;
+                  return `
+                    <div class="cell ${used ? "used" : ""}" data-pick="${used ? "" : escapeHtml(cell.q.id)}">
+                      <div>
+                        <div class="pts">${cell.value}</div>
+                        <div class="tag">${used ? "Sin pregunta disponible" : "Disponible"}</div>
+                      </div>
+                      <div class="pill">${escapeHtml(col.category)}</div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+
+      <div class="btnrow" style="margin-top:14px;">
+        <button class="btn ghost" data-nav="train">Volver</button>
+        <button class="btn bad" id="btnStopTrain">Parar entrenamiento</button>
+      </div>
+    </div>
+  `;
+
+  content.querySelectorAll(".cell[data-pick]").forEach(c=>{
+    c.addEventListener("click", ()=>{
+      const qid = c.getAttribute("data-pick");
+      if(!qid) return;
+      const q = findQuestion(state, qid);
+      if(!q) return;
+
+      session.train.currentQ = q;
+      session.train.currentStartTs = Date.now();
+      nav("train_question", { qid });
+    });
+  });
+
+  el("#btnStopTrain").addEventListener("click", ()=>{
+    endTrainingSession(userState);
+    nav("stats");
+  });
+}
+
+let questionTimer = null;
+
+function renderTrainQuestion(userState, payload){
+  const qid = payload?.qid;
+  const q = findQuestion(state, qid);
+  if(!q){ nav("train_board"); return; }
+
+  setViewTitle("Pregunta", `${q.category} · ${q.value} pts`);
+  let elapsed = 0;
+
+  content.innerHTML = `
+    <div class="card">
+      <div class="btnrow" style="justify-content:space-between; align-items:center;">
+        <div>
+          <span class="pill">${escapeHtml(q.category)}</span>
+          <span class="pill" style="margin-left:6px;">${Number(q.value)||0} pts</span>
+        </div>
+        <div class="pill"><span class="muted">Cronómetro:</span> <b id="qTimer">0</b> s</div>
+      </div>
+
+      <div class="qTitle" style="margin-top:12px;">${escapeHtml(q.question)}</div>
+
+      <div class="options">
+        ${q.options.map((o,i)=>`
+          <div class="opt" data-ans="${i}">
+            <div>
+              <div class="label">${String.fromCharCode(65+i)}.</div>
+              <div class="text">${escapeHtml(o.text)}</div>
+            </div>
+            <div class="pill">Elegir</div>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="btnrow" style="margin-top:14px;">
+        <button class="btn ghost" data-nav="train_board">Volver al tablero</button>
+        <button class="btn bad" id="btnStopTrain2">Parar entrenamiento</button>
+      </div>
+
+      <div class="notice" style="margin-top:12px;">
+        Tip estilo FIT Jeopardy: en vivo el tiempo de respuesta es muy corto (~5 s). Aquí dejamos correr el cronómetro para que midas tu desempeño real.
+      </div>
+    </div>
+  `;
+
+  // Timer
+  clearInterval(questionTimer);
+  questionTimer = setInterval(()=>{
+    elapsed++;
+    el("#qTimer").textContent = String(elapsed);
+  }, 1000);
+
+  function answer(idx){
+    clearInterval(questionTimer);
+    const picked = q.options[idx];
+    const correctOpt = q.options.find(o=>o.correct);
+    const correct = Boolean(picked?.correct);
+
+    // Registrar intento (userState)
+    const seconds = Math.max(1, elapsed);
+    const attempt = {
+      qid: q.id,
+      category: q.category,
+      value: Number(q.value)||0,
+      correct,
+      seconds,
+      at: NOW()
+    };
+    userState.training.attempts.push(attempt);
+
+    // Puntaje: +value si correct, -value si incorrect
+    const delta = correct ? attempt.value : -attempt.value;
+    userState.training.score = (userState.training.score||0) + delta;
+
+    // tablero: marcar usada
+    userState.training.board.usedIds = Array.from(new Set([...(userState.training.board.usedIds||[]), q.id]));
+
+    // Acumular tiempo total de entrenamiento
+    userState.training.totalSeconds = (userState.training.totalSeconds||0) + seconds;
+
+    // Wrong bank por usuario
+    if(!correct){
+      const cur = userState.wrong.items[q.id] || {count:0, lastAt:null};
+      userState.wrong.items[q.id] = {count: cur.count+1, lastAt: NOW()};
+    }
+
+    userState.updatedAt = NOW();
+    saveState(state);
+
+    session.train.lastResult = { qid: q.id, idx, correct, seconds, delta };
+    nav("train_result", { qid: q.id, idx });
+  }
+
+  content.querySelectorAll("[data-ans]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const idx = Number(btn.getAttribute("data-ans"));
+      answer(idx);
+    });
+  });
+
+  el("#btnStopTrain2").addEventListener("click", ()=>{
+    clearInterval(questionTimer);
+    endTrainingSession(userState);
+    nav("stats");
+  });
+}
+
+function renderTrainResult(userState, payload){
+  const qid = payload?.qid;
+  const q = findQuestion(state, qid);
+  const res = session.train.lastResult;
+  if(!q || !res){ nav("train_board"); return; }
+
+  setViewTitle("Resultado", res.correct ? "Correcta ✅" : "Incorrecta ❌");
+
+  const picked = q.options[res.idx];
+  const correctOpt = q.options.find(o=>o.correct);
+  const jeopardyAnswer = q.correctAnswerText || (correctOpt ? `¿Qué es ${correctOpt.text}?` : "");
+
+  content.innerHTML = `
+    <div class="card">
+      <div class="btnrow" style="justify-content:space-between; align-items:center;">
+        <div>
+          <span class="pill">${escapeHtml(q.category)}</span>
+          <span class="pill" style="margin-left:6px;">${Number(q.value)||0} pts</span>
+          ${res.correct ? `<span class="pill good" style="margin-left:6px;">Correcta</span>` : `<span class="pill bad" style="margin-left:6px;">Incorrecta</span>`}
+        </div>
+        <div class="pill"><span class="muted">Tiempo:</span> <b>${res.seconds}</b> s · <span class="muted">Δ puntos:</span> <b>${res.delta}</b></div>
+      </div>
+
+      <div class="qTitle" style="margin-top:12px;">${escapeHtml(q.question)}</div>
+
+      <div class="notice" style="margin-top:12px;">
+        <b>Tu respuesta:</b> ${escapeHtml(picked?.text || "")}
+      </div>
+
+      <div class="notice" style="margin-top:10px; border-color:${res.correct ? "rgba(44,210,120,.30)" : "rgba(255,90,90,.30)"};">
+        <b>Respuesta correcta (formato Jeopardy):</b> ${escapeHtml(jeopardyAnswer)}
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h3>Justificación por opción</h3>
+        ${q.options.map((o,i)=>`
+          <div class="notice" style="margin-top:10px;">
+            <b>${String.fromCharCode(65+i)}. ${escapeHtml(o.text)}</b>
+            ${o.correct ? ` <span class="pill good">Correcta</span>` : ``}
+            ${(!o.correct && i===res.idx) ? ` <span class="pill bad">Tu elección</span>` : ``}
+            <div style="margin-top:6px;">${escapeHtml(o.justification || "")}</div>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h3>Texto para estudiar (studyText)</h3>
+        <div class="notice">${escapeHtml(q.studyText || "No hay studyText en esta pregunta. Sube un banco generado con Gemini que lo incluya.")}</div>
+      </div>
+
+      <div class="btnrow" style="margin-top:14px;">
+        <button class="btn bad" id="btnStopTrain3">Parar entrenamiento</button>
+        <button class="btn primary" id="btnContinue">Continuar entrenamiento</button>
+      </div>
+    </div>
+  `;
+
+  el("#btnStopTrain3").addEventListener("click", ()=>{
+    endTrainingSession(userState);
+    nav("stats");
+  });
+
+  el("#btnContinue").addEventListener("click", ()=>{
+    nav("train_board");
+  });
+}
+
+function endTrainingSession(userState){
+  if(!session.train.active || !session.train.startedAt) return;
+  const seconds = Math.round((Date.now() - session.train.startedAt)/1000);
+  const lastN = 20; // máximo de intentos a "atribuir" a la sesión (simple)
+  const attempts = userState.training.attempts.slice(-lastN);
+  const scoreNow = userState.training.score || 0;
+
+  userState.training.sessions.push({
+    startedAt: new Date(session.train.startedAt).toISOString(),
+    endedAt: NOW(),
+    seconds,
+    score: scoreNow,
+    attempts: attempts.length
+  });
+  userState.updatedAt = NOW();
+  saveState(state);
+
+  session.train.active = false;
+  session.train.startedAt = null;
+  session.train.currentQ = null;
+  session.train.currentStartTs = null;
+  session.train.lastResult = null;
+}
+
+function renderStudy(userState){
+  setViewTitle("Estudiar", "Basado en preguntas falladas");
+
+  const wrongMap = userState.wrong.items || {};
+  const wrongIds = Object.keys(wrongMap);
+  const wrongQs = wrongIds.map(id => {
+    const q = findQuestion(state, id);
+    return q ? { q, meta: wrongMap[id] } : null;
+  }).filter(Boolean);
+
+  wrongQs.sort((a,b)=>{
+    const dc = (b.meta.count||0)-(a.meta.count||0);
+    if(dc!==0) return dc;
+    return (b.meta.lastAt||"").localeCompare(a.meta.lastAt||"");
+  });
+
+  const cats = [...new Set(wrongQs.map(x=>x.q.category))].sort();
+
+  content.innerHTML = `
+    <div class="split">
+      <div class="card">
+        <h2>Preguntas falladas</h2>
+        <div class="field">
+          <label>Filtrar por categoría</label>
+          <select id="studyCat">
+            <option value="">Todas</option>
+            ${cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label>Buscar</label>
+          <input id="studySearch" placeholder="palabra clave..." />
+        </div>
+
+        <div class="card" style="margin-top:12px; max-height: 520px; overflow:auto;">
+          ${wrongQs.length ? wrongQs.map(x=>`
+            <div class="notice" style="margin-top:10px; cursor:pointer;" data-openstudy="${escapeHtml(x.q.id)}">
+              <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+                <div>
+                  <div class="pill">${escapeHtml(x.q.category)}</div>
+                  <div class="pill" style="margin-left:6px;">${Number(x.q.value)||0} pts</div>
+                </div>
+                <div class="pill bad">Fallos: ${x.meta.count||0}</div>
+              </div>
+              <div style="margin-top:8px; font-weight:900;">${escapeHtml(x.q.question)}</div>
+              <div class="muted" style="margin-top:6px;">Último fallo: ${escapeHtml((x.meta.lastAt||"").slice(0,19).replace("T"," "))}</div>
+            </div>
+          `).join("") : `<div class="notice">Aún no tienes preguntas falladas. Entrena y vuelve aquí.</div>`}
+        </div>
+
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn ghost" data-nav="home">Volver</button>
+          <button class="btn" data-nav="train">Entrenar</button>
+        </div>
+      </div>
+
+      <div class="card" id="studyDetail">
+        <h2>Detalle</h2>
+        <div class="notice">Selecciona una pregunta fallada para ver el contenido de estudio (studyText) y justificaciones.</div>
+      </div>
+    </div>
+  `;
+
+  function applyFilters(){
+    const cat = el("#studyCat").value;
+    const q = (el("#studySearch").value || "").toLowerCase();
+    content.querySelectorAll("[data-openstudy]").forEach(box=>{
+      const id = box.getAttribute("data-openstudy");
+      const obj = wrongQs.find(x=>x.q.id===id);
+      if(!obj) return;
+      const okCat = !cat || obj.q.category === cat;
+      const hay = (obj.q.question + " " + obj.q.category + " " + obj.q.options.map(o=>o.text).join(" ")).toLowerCase();
+      const okQ = !q || hay.includes(q);
+      box.style.display = (okCat && okQ) ? "block" : "none";
+    });
+  }
+
+  el("#studyCat").addEventListener("change", applyFilters);
+  el("#studySearch").addEventListener("input", applyFilters);
+
+  content.querySelectorAll("[data-openstudy]").forEach(box=>{
+    box.addEventListener("click", ()=>{
+      const id = box.getAttribute("data-openstudy");
+      const q = findQuestion(state, id);
+      if(!q) return;
+
+      const correct = q.options.find(o=>o.correct);
+      const detail = el("#studyDetail");
+      detail.innerHTML = `
+        <h2>Detalle</h2>
+        <div class="pill">${escapeHtml(q.category)}</div>
+        <div class="pill" style="margin-left:6px;">${Number(q.value)||0} pts</div>
+
+        <div class="qTitle" style="margin-top:12px;">${escapeHtml(q.question)}</div>
+
+        <div class="notice" style="margin-top:10px;">
+          <b>Respuesta correcta:</b> ${escapeHtml(q.correctAnswerText || (correct ? `¿Qué es ${correct.text}?` : ""))}
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3>StudyText</h3>
+          <div class="notice">${escapeHtml(q.studyText || "No hay studyText. Sube un banco JSON generado con Gemini que lo incluya.")}</div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3>Justificaciones</h3>
+          ${q.options.map((o,i)=>`
+            <div class="notice" style="margin-top:10px;">
+              <b>${String.fromCharCode(65+i)}. ${escapeHtml(o.text)}</b>
+              ${o.correct ? ` <span class="pill good">Correcta</span>` : ``}
+              <div style="margin-top:6px;">${escapeHtml(o.justification || "")}</div>
+            </div>
+          `).join("")}
+        </div>
+
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn good" id="markStudied">Marcar como estudiada (no borrar)</button>
+        </div>
+        <p class="muted">Nota: “Estudiada” solo deja un registro; no elimina el fallo histórico.</p>
+      `;
+
+      el("#markStudied").addEventListener("click", ()=>{
+        showToast("<b>OK:</b> registrado como estudiado.");
+      });
+    });
+  });
+}
+
+function renderStats(userState){
+  setViewTitle("Estadísticas", "Consolidado y rendimiento por categoría");
+
+  const attempts = userState.training.attempts || [];
+  const total = attempts.length;
+  const correct = attempts.filter(a=>a.correct).length;
+  const incorrect = total - correct;
+
+  const avgAll = avgSeconds(attempts);
+  const avgC = avgSeconds(attempts.filter(a=>a.correct));
+  const avgI = avgSeconds(attempts.filter(a=>!a.correct));
+
+  // Por categoría
+  const byCat = {};
+  for(const a of attempts){
+    if(!byCat[a.category]) byCat[a.category] = {total:0, correct:0, incorrect:0, secSum:0, secC:0, secI:0};
+    const c = byCat[a.category];
+    c.total++; c.secSum += a.seconds||0;
+    if(a.correct){ c.correct++; c.secC += a.seconds||0; } else { c.incorrect++; c.secI += a.seconds||0; }
+  }
+  const catRows = Object.entries(byCat).map(([cat, v])=>{
+    const acc = v.total ? Math.round(100*v.correct/v.total) : 0;
+    const aAll = v.total ? Math.round(v.secSum/v.total) : 0;
+    const aC = v.correct ? Math.round(v.secC/v.correct) : 0;
+    const aI = v.incorrect ? Math.round(v.secI/v.incorrect) : 0;
+    return {cat, ...v, acc, aAll, aC, aI};
+  }).sort((a,b)=> (b.incorrect - a.incorrect) || (a.acc - b.acc));
+
+  // Métricas adicionales
+  const last20 = attempts.slice(-20);
+  const acc20 = last20.length ? Math.round(100*last20.filter(a=>a.correct).length/last20.length) : 0;
+
+  // streak actual
+  let streak = 0;
+  for(let i=attempts.length-1; i>=0; i--){
+    if(attempts[i].correct) streak++;
+    else break;
+  }
+
+  // Preguntas más falladas
+  const wrongMap = userState.wrong.items || {};
+  const wrongTop = Object.entries(wrongMap)
+    .map(([qid, meta]) => ({qid, ...meta, q: findQuestion(state, qid)}))
+    .filter(x=>x.q)
+    .sort((a,b)=> (b.count - a.count) || (b.lastAt||"").localeCompare(a.lastAt||""))
+    .slice(0, 8);
+
+  content.innerHTML = `
+    <div class="grid cols3">
+      <div class="card"><div class="kpi"><div><div class="v">${total}</div><div class="l">Preguntas respondidas</div></div></div></div>
+      <div class="card"><div class="kpi"><div><div class="v">${correct}</div><div class="l">Aciertos</div></div><div class="pill good">${total ? Math.round(100*correct/total) : 0}%</div></div></div>
+      <div class="card"><div class="kpi"><div><div class="v">${incorrect}</div><div class="l">Incorrectas</div></div><div class="pill bad">${total ? Math.round(100*incorrect/total) : 0}%</div></div></div>
+    </div>
+
+    <div class="grid cols3" style="margin-top:14px;">
+      <div class="card"><div class="kpi"><div><div class="v">${avgAll}</div><div class="l">Prom. seg/preg (global)</div></div></div></div>
+      <div class="card"><div class="kpi"><div><div class="v">${avgC}</div><div class="l">Prom. seg/preg (correctas)</div></div></div></div>
+      <div class="card"><div class="kpi"><div><div class="v">${avgI}</div><div class="l">Prom. seg/preg (incorrectas)</div></div></div></div>
+    </div>
+
+    <div class="grid cols2" style="margin-top:14px;">
+      <div class="card">
+        <h2>Rendimiento por categoría</h2>
+        <div class="tablewrap" style="margin-top:12px;">
+          <table style="min-width: 860px;">
+            <thead>
+              <tr>
+                <th>Categoría</th>
+                <th>Total</th>
+                <th>Aciertos</th>
+                <th>Errores</th>
+                <th>% Acierto</th>
+                <th>Prom seg (all)</th>
+                <th>Prom seg (C)</th>
+                <th>Prom seg (I)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${catRows.length ? catRows.map(r=>`
+                <tr>
+                  <td>${escapeHtml(r.cat)}</td>
+                  <td>${r.total}</td>
+                  <td>${r.correct}</td>
+                  <td>${r.incorrect}</td>
+                  <td>${r.acc}%</td>
+                  <td>${r.aAll}</td>
+                  <td>${r.aC}</td>
+                  <td>${r.aI}</td>
+                </tr>
+              `).join("") : `<tr><td colspan="8">Sin datos aún.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+        <p class="muted">Ordenado priorizando categorías con más errores y menor precisión.</p>
+      </div>
+
+      <div class="card">
+        <h2>Indicadores adicionales</h2>
+        <div class="notice">
+          <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div class="pill">Precisión últimas 20: <b>${acc20}%</b></div>
+            <div class="pill">Racha actual (correctas): <b>${streak}</b></div>
+            <div class="pill">Tiempo total acumulado: <b>${formatMMSS(userState.training.totalSeconds||0)}</b></div>
+            <div class="pill">Puntaje acumulado: <b>${userState.training.score||0}</b></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3>Top preguntas más falladas</h3>
+          ${wrongTop.length ? wrongTop.map(x=>`
+            <div class="notice" style="margin-top:10px;">
+              <div class="pill bad">Fallos: ${x.count}</div>
+              <div class="pill" style="margin-left:6px;">${escapeHtml(x.q.category)}</div>
+              <div class="pill" style="margin-left:6px;">${Number(x.q.value)||0} pts</div>
+              <div style="margin-top:8px;font-weight:900;">${escapeHtml(x.q.question)}</div>
+              <div class="btnrow" style="margin-top:10px;">
+                <button class="btn small" data-jumpStudy="${escapeHtml(x.q.id)}">Abrir en Estudiar</button>
+              </div>
+            </div>
+          `).join("") : `<div class="notice">Sin fallos registrados.</div>`}
+        </div>
+
+        <div class="btnrow" style="margin-top:12px;">
+          <button class="btn" data-nav="study">Estudiar fallos</button>
+          <button class="btn" data-nav="train">Entrenar</button>
+          <button class="btn ghost" data-nav="home">Volver</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  content.querySelectorAll("[data-jumpStudy]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      nav("study");
+      // no auto-open para evitar acople; se puede agregar si quieres
+    });
+  });
+}
+
+// ---------- Start ----------
+(function init(){
+  // arranque en login; si quieres "remember me", se puede persistir session.user
+  nav("login");
+})();
+</script>
+</body>
+</html>
